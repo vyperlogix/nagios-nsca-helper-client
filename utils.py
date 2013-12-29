@@ -5,6 +5,7 @@ from __exceptions__ import formattedException
 isUsingWindows = (sys.platform.lower().find('win') > -1) and (os.name.lower() == 'nt')
 isUsingMacOSX = (sys.platform.lower().find('darwin') > -1) and (os.name.find('posix') > -1) and (not isUsingWindows)
 isUsingLinux = (sys.platform.lower().find('linux') > -1) and (os.name.find('posix') > -1) and (not isUsingWindows) and (not isUsingMacOSX)
+isBeingDebugged = False if (not os.environ.has_key('WINGDB_ACTIVE')) else int(os.environ['WINGDB_ACTIVE']) == 1
 
 def isString(s):
     return (isinstance(s,str)) or (isinstance(s,unicode))
@@ -70,6 +71,15 @@ def md5(plain):
     m = hashlib.md5()
     m.update(plain)
     return m.hexdigest()
+
+def readfile(fname):
+    fIn = open(fname, mode='r',buffering=1)
+    try:
+	lines = fIn.readlines()
+    except:
+	lines = []
+    fIn.close()
+    return lines
 
 def handle_services(cfgname,payload,logger):
     __re2__ = re.compile("\Ahost[0-9]*_")
@@ -366,9 +376,9 @@ def shellexecute(cmd):
 	    infile, outfile, errfile = os.popen3(cmd)
 	    stdout_lines = outfile.readlines()
 	    stderr_lines = errfile.readlines()
-	    results = stdout_lines + stderr_lines
+	    results = (stdout_lines, stderr_lines)
 	except Exception, ex:
-	    results = formattedException(details=ex)
+	    results = (formattedException(details=ex),)
     return results
 
 class SmartObject(object):

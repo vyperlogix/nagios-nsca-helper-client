@@ -17,7 +17,13 @@ Create Mode:
 
 This mode creates the monitoring config file for a single VM.
 
+See create.sh for the details.
+
 Monitor Mode:
 
 This mode automates the monitoring for a single vm.
+
+See monitor.sh for the details.
+
+Enjoy.
 
