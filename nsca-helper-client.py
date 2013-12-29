@@ -74,6 +74,8 @@ __PARTITIONS__ = 'PARTITIONS'
 
 __DISKS__ = 'DISKS'
 
+__get_partition_name__ = "df | awk '{print $1}' | grep %s"
+
 if __name__ == '__main__':
     '''
     python nsca-helper-client.py
@@ -287,58 +289,6 @@ if __name__ == '__main__':
 			if (__plugins__) and (os.path.exists(__plugins__)):
 			    for svc in services:
 				monitor_service(svc,'{{host}}',options.host)
-				#cmd = __config__[svc]
-				#cName = cmd.split()[0]
-				#__cmd__ = os.sep.join([__plugins__,cName])
-				#if (os.path.exists(__cmd__)):
-				    #cmd = cmd.replace(cName,__cmd__).replace('{{host}}',options.host)
-				    #logger.debug('(+++) %s=%s' % (svc,cmd))
-
-				    #__results__ = utils.shellexecute(cmd)
-				    #results = [str(item).strip() for item in __results__[0]]
-				    #retcode = [str(item).strip() for item in __results__[-1]]
-				    #logger.info('(+++) cmd-->results=%s' % (results))
-				    #logger.info('(+++) cmd-->retcode=%s' % (retcode))
-				    
-				    #data = "%s\\t%s\\t%s\\t%s\n" % (options.host, svc, 0 if (len(retcode) == 0) else 1, results[0])
-				    #logger.debug('(+++) data=%s' % (data))
-
-				    #payload = utils.SmartObject()
-	    
-				    #payload.oper = "login"
-				    #payload.username = __username__
-				    #payload.password = __password__
-
-				    #payload.send_nsca = data
-
-				    #__cfg__ = None
-				    #__results__ = utils.shellexecute(__find_send_nsca_cfg__)
-				    #results = [str(f).strip() for f in __results__[0] if (os.path.exists(str(f).strip()))]
-				    #if (len(results) > 0):
-					#__cfg__ = results[0]
-				    #logger.info('__results__=%s [%s]' % (__results__,len(__results__)))
-				    #logger.info('__cfg__=%s' % (__cfg__))
-
-				    #payload.cfg = __cfg__
-
-				    #headers = {'Content-Type':'application/json', 'Accept':'application/json'}
-				    #r = requests.post('%s/nsca/nagios/send/nsca' % (options.url),data=simplejson.dumps(payload.__dict__), headers=headers)
-				    #logger.debug('r.status_code=%s' % (r.status_code))
-				    #logger.debug('r.json()=%s' % (r.json()))
-				    
-				    #if (r.status_code == 200):
-					#try:
-					    #response = utils.SmartObject(args=r.json())
-					    #logger.debug('response=%s' % (response.__dict__))
-					    #matches = __re1__.search(response.status[0] if (utils.isList(response.status)) else response.status) if (response.status) else None
-					    #if (matches):
-						#groups = utils.SmartObject(args=matches.groupdict())
-						#logger.debug('(+++) matches=%s [%s]' % (matches,groups.__dict__))
-						
-						#if (groups.num):
-						    #logger.debug('(+++) groups.num=%s' % (groups.num))
-					#except Exception, ex:
-					    #logger.exception('EXCEPTION: %s' % (utils.formattedException(details=ex)))
 
 			    others = list(set(__config__.keys()) - set(services) - set(['__dict__']))
 			    logger.debug('(+++) others=%s' % (others))
@@ -359,7 +309,15 @@ if __name__ == '__main__':
 					disks = __config__[__DISKS__]
 					logger.debug('(+++) disks=%s' % (disks))
 					for p in partitions:
-					    monitor_service(__DISKS__,'{{partition}}',p)
+					    partition_name = None
+					    __results__ = utils.shellexecute(__get_partition_name__ % p)
+					    results = [str(f).strip() for f in __results__[0]]
+					    if (len(results) > 0):
+						partition_name = results[0] if (utils.isList(results)) else results
+					    logger.info('__results__=%s [%s]' % (__results__,len(__results__)))
+					    logger.info('partition_name=%s' % (partition_name))
+
+					    monitor_service(__DISKS__,'{{partition}}',partition_name)
 			else:
 			    logger.error('Cannot determine location of nagios plugins directory.')
 		    else:
